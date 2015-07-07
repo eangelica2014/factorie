@@ -1,12 +1,12 @@
 package cc.factorie.app.nlp.load
 
-import cc.factorie.app.nlp.pos.LabeledGermanPosTag
+import cc.factorie.app.nlp.pos.{PosTag, LabeledGermanPosTag}
 import cc.factorie.app.nlp.{Sentence, UnknownDocumentAnnotator, Token, Document}
 import cc.factorie.app.nlp.pos
 /**
  * Created by Esther on 6/18/15.
  */
-object LoadTigerConll09 {
+object LoadTigerConll09 extends Load {
 
   def fromSource(source:io.Source): Seq[Document] = {
     import scala.collection.mutable.ArrayBuffer
@@ -39,5 +39,14 @@ object LoadTigerConll09 {
       }
     }
     documents
+  }
+
+  def main(args: Array[String]) = {
+    // here we assume first arg is just the data filename
+    val fname = args(0)
+    val docs = fromFilename(fname)
+
+    // just print out the first document loaded, one word per line
+    docs.head.tokens.foreach{token => println(s"${token.string}\t${token.attr[PosTag].categoryValue}")}
   }
 }
