@@ -18,7 +18,6 @@ object LoadTigerConll09 extends Load {
       document
     }
 
-
     val documents = new ArrayBuffer[Document]
     var document = newDocument("TigerConll09" + documents.length)
     documents += document

@@ -266,6 +266,7 @@ object GermanPosDomain extends CategoricalDomain[String] {
   "KON", //nebenordnende Konjunktion
   "KOKOM", //Vergleichskonjunktion
   "NN", //normales Nomen
+  "NNE", //Eigennamen
   "NE", //Eigennamen
   "PDS", //substituierendes Demonstrativpronomen
   "PDAT", //attribuierendes Demonstrativpronomen
@@ -282,6 +283,7 @@ object GermanPosDomain extends CategoricalDomain[String] {
   "PWAT", //attribuierendes Interrogativpronomen
   "PWAV", //adverbiales Interrogativ- oder Relativpronomen
   "PAV", //Pronominaladverb
+  "PROAV", //Pronominaladverb
   "PTKZU", //``zu'' vor Infinitiv
   "PTKNEG", //Negationspartikel
   "PTKVZ", //abgetrennter Verbzusatz
@@ -308,7 +310,7 @@ object GermanPosDomain extends CategoricalDomain[String] {
   freeze()
 
   def isNoun(pos:String): Boolean = pos == "NN"
-  def isProperNoun(pos:String) = pos == "NE"
+  def isProperNoun(pos:String) = {pos == "NE"||pos == "NNE"}
   def isVerb(pos:String) = pos(0) == 'V'
   def isAdjective(pos:String) = pos == "ADJA"
   def isPersonalPronoun(pos: String) = {pos == "PPER" || pos == "PRF"}
