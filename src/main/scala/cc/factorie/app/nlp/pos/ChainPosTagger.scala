@@ -186,15 +186,23 @@ class ChainPosTrainer[A<:PosTag, B<:ChainPosTagger[A]](taggerConstructor: () => 
     implicit val random = new scala.util.Random(0)
     val opts = new ForwardPosOptions
     opts.parse(args)
-    assert(opts.trainDir.wasInvoked)
+    assert(opts.trainFile.wasInvoked || opts.trainDir.wasInvoked)
     // Expects three command-line arguments: a train file, a test file, and a place to save the model in
     // the train and test files are supposed to be in OWPL format
     val pos = taggerConstructor()
 
-    val trainDocs = loadingMethod(opts.trainDir.value)
-    println("NUM TRAIN DOCS:" + trainDocs.size)
-    val testDocs =  loadingMethod(opts.testDir.value)
-    println("NUM TEST DOCS:" + testDocs.size)
+    val trainDocs =
+      if(opts.trainDir.wasInvoked) loadingMethod(opts.trainDir.value)
+      else loadingMethod(opts.trainFile.value)
+
+    val testDocs =
+      if(opts.trainDir.wasInvoked) loadingMethod(opts.testDir.value)
+      else loadingMethod(opts.testFile.value)
+
+    if(opts.trainDir.wasInvoked) {
+      println("NUM TRAIN DOCS:" + trainDocs.size)
+      println("NUM TEST DOCS:" + testDocs.size)
+    }
 
     //for (d <- trainDocs) println("POS3.train 1 trainDoc.length="+d.length)
     println("Read %d training tokens.".format(trainDocs.map(_.tokenCount).sum))
@@ -306,4 +314,47 @@ object SpanishChainPosTagger extends SpanishChainPosTagger(ClasspathURL[SpanishC
 object SpanishChainPosTrainer extends ChainPosTrainer[SpanishPosTag, SpanishChainPosTagger](
   () => new SpanishChainPosTagger(),
   (dirName: String) => load.LoadSpanishConll2008.fromFilename(dirName)
+)
+
+
+class GermanChainPosTagger extends ChainPosTagger((t:Token) => new GermanPosTag(t,0)) {
+  def this(url: java.net.URL) = {
+    this()
+    deserialize(url.openConnection().getInputStream)
+  }
+
+  def initPOSFeatures(sentence: Sentence): Unit = {
+    import cc.factorie.app.strings.simplifyDigits
+    for (token <- sentence.tokens) {
+      if(token.attr[PosFeatures] ne null)
+        token.attr.remove[PosFeatures]
+
+      val features = token.attr += new PosFeatures(token)
+      val rawWord = token.string
+      val word = simplifyDigits(rawWord).toLowerCase
+      features += "W="+word
+      features += "STEM=" + cc.factorie.app.strings.porterStem(word)
+      features += "SHAPE2=" + cc.factorie.app.strings.stringShape(rawWord, 2)
+      features += "SHAPE3=" + cc.factorie.app.strings.stringShape(rawWord, 3)
+      // pre/suf of length 1..9
+      //for (i <- 1 to 9) {
+      val i = 3
+      features += "SUFFIX" + i + "=" + word.takeRight(i)
+      features += "PREFIX" + i + "=" + word.take(i)
+      //}
+      if (token.isCapitalized) features += "CAPITALIZED"
+      if (token.string.matches("[A-Z]")) features += "CONTAINS_CAPITAL"
+      if (token.string.matches("-")) features += "CONTAINS_DASH"
+      if (token.containsDigit) features += "NUMERIC"
+      if (token.isPunctuation) features += "PUNCTUATION"
+    }
+    addNeighboringFeatureConjunctions(sentence.tokens, (t: Token) => t.attr[PosFeatures], "W=[^@]*$", List(-2), List(-1), List(1), List(-2,-1), List(-1,0))
+  }
+
+}
+
+object GermanChainPosTagger extends GermanChainPosTagger(ClasspathURL[GermanChainPosTagger](".factorie"))
+object GermanChainPosTrainer extends ChainPosTrainer[GermanPosTag, GermanChainPosTagger](
+  () => new GermanChainPosTagger(),
+ (dirName: String) => load.LoadTigerConll09.fromFilename(dirName)
 )
