@@ -159,3 +159,125 @@ object PorterStemmer {
     stemmed.zip(trueStemmed).take(20).foreach(s => println("sample: " + s._1 + " " + s._2))
   }
 }
+
+object GermanStemmer{
+  val vowel = "[aeiouyäöü]"
+  val consonant = "[^aeiouyäöü]"
+  val s_ending = "[bdfghklmnrt]"
+  val st_ending = "[bdfghklmnt]"
+  val regionPattern = consonant+"*"+ vowel + "+" + consonant
+
+
+  def processWord(inputWord: String): String = {
+    var word = inputWord.toLowerCase
+
+    //Replace all instances of ß with ss
+    word = word.replaceAll("ß", "ss")
+
+    //Make u and y capital if they occur between two vowels
+
+    word = word.replaceAll("([aeiouyäöü])(u)([aeiouyäöü])", "$1U$3")
+    word = word.replaceAll("([aeiouyäöü])(y)([aeiouyäöü])", "$1Y$3")
+
+    /*Region R1: the region after the first non-vowel following a vowel, or is the null region at
+    the end of the word if there is no such non-vowel
+    Region R2: the region after the first non-vowel following a vowel in R1, or is the null region
+    at the end of the word if there is no such non-vowel
+
+    _r1 is the letters preceding region R1
+    _r1+_r2 is the letters preceding region R2
+    extra is any additional requirements about the letters directly preceding the suffix
+    suffix is the suffix that is too be changed
+    replaceSuffix is what the suffix should be changed to*/
+    def Replacer(_r1: String, _r2: String, extra: String, suffix: String, replaceSuffix: String): String = {
+      //there must be at least 3 letters preceding R1
+      var threeRule = ""
+      if (_r1.r.findFirstIn(word).getOrElse("").size < 3){ threeRule = ".{1}"}
+        //constructs the pattern we are looking for
+        val pattern = _r1 + threeRule + _r2 + ".*" + "(" + suffix + ")"
+        val extras = ".*"+ extra + "(" + suffix + ")"
+
+        /*if we find that the suffix is found in the correct region with the correct specifications
+        about the preceding letter, we replace it as specified by replaceSuffix. The letters that are required
+        to precede the suffix do not necessarily have to be in any region*/
+        if (pattern.r.findFirstIn(word).getOrElse("") != "" && extras.r.findFirstIn(word).getOrElse("") != "")
+          suffix.r.replaceAllIn(word, replaceSuffix)
+        else word
+
+      }
+
+
+    //Step 1a
+    //delete suffixes em, ern, er if in R1
+    word = Replacer(regionPattern,"","","em$|ern$|er$","" )
+
+    //Step 1b
+    //if suffixes e, en, es are preceded by niss, delete the last s on nis
+    word = Replacer(regionPattern,"","","nisse$|nissen$|nisses$","nis")
+    //delete suffixes e, en, es if in R1
+    word = Replacer(regionPattern, "", "", "e$|en$|es$", "")
+
+    //Step 1c
+    //delete suffix s if in R1 and preceded by an appropriate s_ending (the s_ending must not necessarily be in R1)
+    word = Replacer(regionPattern,"",s_ending,"s$","")
+
+    //Step2a
+    //delete suffix en, er, est
+    word = Replacer(regionPattern,"","","en$|er$|est$","")
+
+    //Step2b
+    //delete suffix st if it is in R1 and preceded by an appropriate st_ending which is preceded by at least 3 letters
+    word = Replacer(regionPattern,"",".{3}" + st_ending,"st$","")
+
+    //Step3
+    //delete suffix end, ung if in R2
+    word = Replacer(regionPattern, regionPattern, "","end$|ung$","")
+    //delete suffix ig,ik,isch if in R2 and not preceded by an e
+    word = Replacer(regionPattern, regionPattern, "[^e]", "ig$|ik$|isch$", "")
+    //delete suffix lich,heit if preceded by er or en and entire suffix is found in R1
+    word = Replacer(regionPattern, "", "","erlich$|erheit$|enlich|enheit", "")
+    //delete suffix lich, heit if in R2
+    word = Replacer(regionPattern, regionPattern,"","lich$|heit$","")
+    //delete lichkeit and igkeit if in R2
+    word = Replacer(regionPattern,regionPattern, "", "lichkeit$|igkeit$", "")
+    //delete suffix keit if in R2
+    word = Replacer(regionPattern, regionPattern, "", "keit$", "")
+
+    //Step4
+    //replace U and Y with lowercase letters again
+    word = word.replaceAll("U", "u")
+    word = word.replaceAll("Y", "y")
+
+    //remove any umlauts
+    word = word.replaceAll("ä","a")
+    word = word.replaceAll("ö","o")
+    word = word.replaceAll("ü","u")
+
+    word
+  }
+
+  def apply(s:String): String = processWord(s)
+
+  def main(args: Array[String]): Unit = {
+    def getOWPL(f: String) = io.Source.fromFile(f).getLines().toSeq.map(_.trim)
+
+    if (args.length != 2)
+      println("Expected arguments are a OWPL file of unstemmed and a OWPL file of properly stemmed words to check against.\n" +
+        "These are available at http://tartarus.org/martin/PorterStemmer/")
+
+    val unstemmed = getOWPL(args(0))
+    val trueStemmed = getOWPL(args(1))
+
+    println("unstemmed.size: " + unstemmed.size)
+    println("trueStemmed.size: " + trueStemmed.size)
+
+    val stemmed = unstemmed.map(apply)
+
+    println("stemmed.size: " + stemmed.size)
+
+    stemmed.zip(trueStemmed).filter(s => s._1 != s._2).foreach(println(_))
+    stemmed.zip(trueStemmed).foreach(s => assert(s._1 == s._2, s._1 + " " + s._2))
+    stemmed.zip(trueStemmed).take(20).foreach(s => println("sample: " + s._1 + " " + s._2))
+  }
+
+}

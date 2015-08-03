@@ -329,3 +329,57 @@ class GermanPosTag(token:Token, intialIndex:Int) extends PosTag(token, intialInd
 
 class LabeledGermanPosTag(token:Token, targetValue:String) extends GermanPosTag(token, targetValue) with CategoricalLabeling[String]
 
+object HindiPosTagDomain extends CategoricalDomain[String]{
+  this ++= Vector(
+    "B-NP", //Beginning noun
+    "CC", //Coordinating Conjunction
+    "CC:?", //maybe Coordinating Conjunction
+    "DEM", //Demonstrative
+    "ECH", //Echo words
+    "I-NP", //Noun phrase
+    "INJ", //Interjection
+    "INTF", //Intensifier
+    "JJ", //Adjective
+    "JJ:?", //maybe Adjective
+    "NEG", //Negation
+    "NN", //Noun
+    "NN:?", //maybe Noun
+    "NNP", //Proper noun
+    "NST", //Noun denoting spatial and temporal expressions
+    "PRP", //Pronoun
+    "PSP", //Postposition
+    "PSP:?", //maybe Postposition
+    "QC", //Cardinals
+    "QF", //Quantifiers
+    "QO", //Ordinals
+    "RB", //Adverb
+    "RB:?", //maybe Adverb
+    "RDP", //Reduplications
+    "RP", //Particles
+    "RP:?", //maybe Particles
+    "SYM", //Symbol
+    "UNK", //Unknown, Foreign words
+    "VAUX", //Auxilary verb
+    "VM", //Main verb
+    "WQ", //Question words
+    "XC" //Compounds
+  )
+
+  freeze()
+
+  def isNoun(pos:String): Boolean = {pos == "NN" || pos == "NN:?" || pos == "B-NP" || pos == "I-NP"}
+  def isProperNoun(pos:String) = pos == "NNP"
+  def isVerb(pos:String) = pos(0) == 'V'
+  def isAdjective(pos:String) = pos(0) == "J"
+  def isPersonalPronoun(pos: String) = pos == "PRP"
+}
+class HindiPosTag(token:Token, intialIndex:Int) extends PosTag(token, intialIndex){
+  def this(token:Token, initialCategory:String) = this(token, HindiPosTagDomain.index(initialCategory))
+  final def domain = HindiPosTagDomain
+  def isNoun = HindiPosTagDomain.isNoun(categoryValue)
+  def isProperNoun = HindiPosTagDomain.isProperNoun(categoryValue)
+  def isVerb = HindiPosTagDomain.isVerb(categoryValue)
+  def isAdjective = HindiPosTagDomain.isAdjective(categoryValue)
+  def isPersonalPronoun = HindiPosTagDomain.isPersonalPronoun(categoryValue)
+}
+class LabeledHindiPosTag(token:Token, targetValue:String) extends HindiPosTag(token, targetValue) with CategoricalLabeling[String]

@@ -104,6 +104,7 @@ package object strings {
   }
 
   def porterStem(s:String): String = PorterStemmer(s)
+  def germanPorterStem(s:String): String = GermanStemmer(s)
   
 }
 
