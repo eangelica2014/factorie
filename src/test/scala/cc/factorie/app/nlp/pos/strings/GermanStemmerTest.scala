@@ -59,6 +59,7 @@ class GermanStemmerTest {
     list.foreach { e =>
       val (word, stem) = e
       assert(cc.factorie.app.strings.germanPorterStem(word) == stem)
+      //println(word + "\t" + stem)
     }
   }
 

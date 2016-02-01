@@ -29,6 +29,8 @@ class NaiveBayes(var evidenceSmoothingMass: Double = 1.0) extends MulticlassClas
     for (i <- 0 until labels.length; label = labels(i); feature = features(i); w = weights(i)) {
       feature.foreachActiveElement((featureIndex, featureValue) => {
         evid(label).masses += (featureIndex, w*featureValue)
+        println(label+"\t"+evid(label).masses)
+
       })
     }
     // Put results into the model templates

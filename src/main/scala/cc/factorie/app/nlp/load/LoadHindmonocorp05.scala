@@ -1,7 +1,7 @@
 package cc.factorie.app.nlp.load
 
 import cc.factorie.app.nlp.pos.{LabeledHindiPosTag, LabeledGermanPosTag, PosTag}
-import cc.factorie.app.nlp.{Document, Sentence, Token, UnknownDocumentAnnotator, pos}
+import cc.factorie.app.nlp.{Document, Sentence, Token, UnknownDocumentAnnotator, pos, transliterate}
 
 /**
  * Created by Esther on 6/18/15.
@@ -30,8 +30,8 @@ object LoadHindmonocorp05 extends Load {
       else {
         val fields = line.split('\t')
         //assert(fields.length == 15)
-        print(fields(0) + "\t")
-        val word = fields(0)
+        //print(fields(0) + "\t")
+        val word = cc.factorie.app.nlp.transliterate.transliterateHindi(fields(0))
         //println(word)
         val partOfSpeech = fields(2)
         if (sentence.length > 0) document.appendString(" ")

@@ -120,7 +120,7 @@ object transliterateHindi {
     word
   }
 
-
+//problem with hyphenated words
   def apply(s: String) = handleMultiChar(s.concat("\0")).map(x => charMap.get(x).getOrElse(x)).mkString("").replaceAll("a([aAeEiIoOuU\0])","$1").stripSuffix("\0*")
 
 
