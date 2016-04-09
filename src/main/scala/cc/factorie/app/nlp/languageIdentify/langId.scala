@@ -155,8 +155,8 @@ object langId {
       for (j <- i._1.keySet) {
 
         if(i._1(j) < 1){
-          println(j)
-          println("What happened!")
+          //println(j)
+          //println("What happened!")
         }
         //change the values in the hashmap to the percentage of all n-grams
         i._1.update(j, scala.math.log(i._1(j)) / total)
